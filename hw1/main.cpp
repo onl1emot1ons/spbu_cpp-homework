@@ -1,57 +1,58 @@
 #include <iostream>
-#include <functional>
+#include <functional> // для сравнение в компараторе less
 #include <vector>
-#include <iterator>
+#include <iterator> // для iterator trails
 using namespace std;
 
 
-template <
-    typename It,
-    typename Compare = less<typename iterator_traits<It>::value_type>
->
+template <  // компаратор
+    typename It, // создаём тип для итераторов (указателей на элемент сортируемого типа)
+    typename Compare = less<typename iterator_traits<It>::value_type> //сравниваем два значения, которые передаются через итератор
+> //iterator_traits достаёт инфу о типе итератора It, а value_type достаёт тип элемента (int, float, ...), typename говорит, что это тип элемента с которым будет работать less
 
 
 void mySort(It first, It last, Compare comp = Compare{}) {
-    auto size = last - first;
+    auto size = last - first;  //size автоматически получает кол-во позиций между итераторами, целочисленное
 
-    if (size <= 1) return;
+    if (size <= 1) return; // если 1 элемент - возвращаемся на предыдущий уровень рекурсии, так как 1 элем уже отсрчен
 
-    It middle = first + size / 2;
+    It middle = first + size / 2; //указатель на середину - так как указатели целочисленные => деление нацело
 
     mySort(first, middle, comp);
-    mySort(middle, last, comp);
+    mySort(middle, last, comp); //две рекурсии - сортируем половины
 
-    using value = typename iterator_traits<It>::value_type;
-    vector<value> buffer;
-    buffer.reserve(size);
+    using value = typename iterator_traits<It>::value_type; //с помощью typename мы получаем тип данных, которые передаются через It, и называем этот тип value
+    vector<value> buffer; // таким образом создаётся промежуточный вектор куда мы складываем уже отсортированные подмассивы
+    buffer.reserve(size); // заранее выделяем в нём место минимум для size элементов, чтобы быстрее работал push_back
 
-    It left = first;
-    It right = middle;
+    It left = first; // передаём в лефт итератор на первый элемент - левая граница первого "подмассива"
+    It right = middle; // в правый - левая граница правого "подмассива"
 
-    while (left != middle && right != last) {
-        if (comp(*left, *right)) {
-            buffer.push_back(*left);
-            ++left;
+    while (left != middle && right != last) { //начинаем путь по двум массивам
+        if (comp(*left, *right)) { //элем левого меньше элем правого?
+            buffer.push_back(*left); //да = добавляем элем из левого
+            ++left; //переходим на след элемент левой части
         }
-        else {
-            buffer.push_back(*right);
-            ++right;
+        else { //иначе (правый меньше левого)
+            buffer.push_back(*right); //добавляем элем из правого
+            ++right; //добавляем к итератору 1
         }
     }
-
-    while (left != middle) {
+    // ВАЖНО УЧИТЫВАТЬ !!!!! здесь подмассивы - не массивы по сути, а лишь указатели на элементы, которые мы сортируем
+    // - в конкретной итерации рекурсии у нас свой first, last И middle, которые указывают на нужные элементы массива и ограничивают чтобы мы не трогали лишние элементы
+    while (left != middle) { //если остались элементы в левом - они точно больше правого, так как он дошёл до конца, а левый отсорчен
         buffer.push_back(*left);
-        ++left;
+        ++left; //аналогично как в части алгоритма для сравнения элементов
     }
-    while (right != last) {
+    while (right != last) { //аналогично для правого подмассива
         buffer.push_back(*right);
         ++right;
     }
 
-    It destination = first;
-    for (auto& element : buffer) {
-        *destination = element;
-        ++destination;
+    It destination = first; //финальная стадия - будем перезаписывать исходный массив. в destination кладём итератор на первый элемент разделённого и уже отсорченного в буфере массива
+    for (auto& element : buffer) { //для каждого элемента в буфере
+        *destination = element; //в элемент за ссылкой destination кладём element
+        ++destination; // пеерходим к след элементу
     }
 }
 
@@ -80,9 +81,9 @@ int main() {
     }
     cout << '\n';
 
-    vector<int> new_v = v;
-    mySort(new_v.begin(), new_v.end());
-    for (auto& element : new_v) {
+    vector<int> sorted_v = v;
+    mySort(sorted_v.begin(), sorted_v.end());
+    for (auto& element : sorted_v) {
         cout << element << " ";
     }
     cout << '\n';
