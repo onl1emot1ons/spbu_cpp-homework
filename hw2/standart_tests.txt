@@ -1,0 +1,110 @@
+// std::cout << "Hello world!" << '\n';
+
+    // DenseMatrix matrix(2, 3);
+    // matrix.set_element(0, 1, 5.5);
+    // matrix.set_element(1, 2, 7.0);
+
+    // for (int row = 0; row < matrix.get_rows(); ++row) {
+    //     for (int col = 0; col < matrix.get_cols(); ++col) {
+    //         std::cout << matrix.get_element(row, col) << ' ';
+    //     }
+    //     std::cout << '\n';
+    // }
+    // std::cout << '\n';
+
+
+    // DenseMatrix a(2, 3, {1, 2, 3,
+    //                                         4, 5, 6});
+    // DenseMatrix b(3, 2, {7,  8,
+    //                                         9, 10,
+    //                                         11, 12});
+    // DenseMatrix c = a.multiply_naive(b);
+
+    // for (int i = 0; i < c.get_rows(); ++i) {
+    //     for (int j = 0; j < c.get_cols(); ++j) {
+    //         std::cout << c.get_element(i, j) << ' ';
+    //     }
+    //     std::cout << '\n';
+    // }
+    // std::cout << '\n';
+    //
+    // DenseMatrix c2 = a.multiply_optimized(b);
+    // for (int i = 0; i < c.get_rows(); ++i) {
+    //     for (int j = 0; j < c.get_cols(); ++j) {
+    //         std::cout << c.get_element(i, j) << ' ';
+    //     }
+    //     std::cout << '\n';
+    // }
+
+// сравниваем время
+    int n = 500;
+
+    DenseMatrix a(n, n);
+    DenseMatrix b(n, n);
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            a.set_element(i, j, (i - j) % 10);
+            b.set_element(i, j, (i + j + 10) % 10);
+        }
+    }
+
+    auto start_naive = std::chrono::steady_clock::now();
+
+    DenseMatrix c_naive = a.multiply_naive(b);
+
+    auto end_naive = std::chrono::steady_clock::now();
+
+    auto start_optimized = std::chrono::steady_clock::now();
+
+    DenseMatrix c_optimized = a.multiply_optimized(b);
+
+    auto end_optimized = std::chrono::steady_clock::now();
+
+    double time_naive =
+        std::chrono::duration<double>(end_naive - start_naive).count();
+
+    double time_optimized =
+        std::chrono::duration<double>(end_optimized - start_optimized).count();
+
+    std::cout << "i-j-k: " << time_naive << " seconds\n";
+    std::cout << "i-k-j: " << time_optimized << " seconds\n";
+
+    bool equal = true;
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (c_naive.get_element(i, j) !=
+                c_optimized.get_element(i, j)) {
+                equal = false;
+                }
+        }
+    }
+
+    std::cout << "Results match: " << equal << '\n';
+
+// DenseMatrix a(2, 3, {1, 2, 3,
+    //                                         4, 5, 6});
+    // DenseMatrix identity(3, 3, {1, 0, 0,
+    //                                                 0, 1, 0,
+    //                                                 0, 0, 1});
+    //
+    // DenseMatrix result = a.multiply_optimized(identity);
+    //
+    // for (int i = 0; i < result.get_rows(); ++i) {
+    //     for (int j = 0; j < result.get_cols(); ++j) {
+    //         std::cout << result.get_element(i, j) << ' ';
+    //     }
+    //     std::cout << '\n';
+    // }
+    // std::cout << '\n';
+
+DenseMatrix a(2, 3);
+    DenseMatrix b(2, 4);
+
+    try {
+        DenseMatrix result = a.multiply_optimized(b);
+        std::cout << "ERROR: multiplication was allowed\n";
+    } catch (const std::invalid_argument& error) {
+        std::cout << "Expected exception: " << error.what() << '\n';
+    }
