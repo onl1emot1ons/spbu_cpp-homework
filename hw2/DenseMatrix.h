@@ -10,6 +10,8 @@
 #include <vector>
 #include <stdexcept>
 
+class SparseMatrix;
+
 class DenseMatrix : public Matrix {
 private:
     int rows_;
@@ -78,15 +80,9 @@ public:
         return result;
     }
 
-    std::unique_ptr<Matrix> mul(const Matrix& second) const override {
-        const DenseMatrix* dense = dynamic_cast<const DenseMatrix*>(&second);
+    DenseMatrix multiply_sparse(const SparseMatrix& second) const;
 
-        if (dense == nullptr) {
-            throw std::invalid_argument("Unsupported matrix type");
-        }
-
-        return std::make_unique<DenseMatrix>(multiply_optimized(*dense));
-    }
+    std::unique_ptr<Matrix> mul(const Matrix& second) const override;
 
     int get_rows() const override {
         return rows_;
