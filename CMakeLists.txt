@@ -4,7 +4,9 @@ project(cpp_homework)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(hw1 hw1/main.cpp
-        hw3/tests/tests.cpp)
+        hw3/tests/tests.cpp
+        hw4/DenseParallel.cpp
+        hw4/MatrixIO.h)
 
 add_executable(hw2 hw2/main_hw2.cpp
         hw2/DenseMatrix.h
@@ -21,6 +23,17 @@ add_executable(hw2_bench
 add_executable(hw3 hw3/main_hw3.cpp
         hw3/SparseMatrix.h
         hw3/DenseSparse.cpp)
+
+find_package(Threads REQUIRED)
+
+add_executable(hw4
+        hw4/main_hw4.cpp
+        hw4/DenseParallel.cpp
+        hw3/DenseSparse.cpp
+        hw4/MatrixIO.h
+)
+
+target_link_libraries(hw4 PRIVATE Threads::Threads)
 
 option(HW2_ENABLE_ASAN "Enable AddressSanitizer for hw2_tests in Debug" OFF)
 
@@ -40,3 +53,6 @@ if(HW2_ENABLE_ASAN)
 endif()
 
 add_subdirectory(hw3)
+
+enable_testing()
+add_subdirectory(hw4)

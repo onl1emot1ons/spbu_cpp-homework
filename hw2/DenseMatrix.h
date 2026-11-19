@@ -80,6 +80,8 @@ public:
         return result;
     }
 
+    DenseMatrix multiply_parallel(const DenseMatrix& second, int flows) const;
+
     DenseMatrix multiply_sparse(const SparseMatrix& second) const;
 
     std::unique_ptr<Matrix> mul(const Matrix& second) const override;
