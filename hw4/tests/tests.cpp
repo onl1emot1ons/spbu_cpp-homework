@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -17,7 +18,8 @@ void require(bool condition, const std::string& message) {
     }
 }
 
-void check_matrix(const DenseMatrix& actual, const DenseMatrix& expected) {
+void check_matrix(const DenseMatrix& actual, const DenseMatrix& expected,
+                  double tolerance = 1e-9) {
     require(actual.get_rows() == expected.get_rows() &&
             actual.get_cols() == expected.get_cols(), "Matrix sizes differ");
 
@@ -25,7 +27,7 @@ void check_matrix(const DenseMatrix& actual, const DenseMatrix& expected) {
         for (int col = 0; col < expected.get_cols(); ++col) {
             const double difference =
                 std::abs(actual.get_element(row, col) - expected.get_element(row, col));
-            if (!(difference <= 1e-9)) {
+            if (!(difference <= tolerance)) {
                 throw std::runtime_error("Matrix values differ at (" +
                     std::to_string(row) + ", " + std::to_string(col) + ")");
             }
@@ -115,7 +117,7 @@ struct TestFile {
 };
 
 void write_fixture(const std::string& path, const char* contents) {
-    std::ofstream file(path);
+    std::ofstream file(path, std::ios::binary);
     file << contents;
     file.close();
     require(static_cast<bool>(file), "Could not write test file " + path);
@@ -124,18 +126,44 @@ void write_fixture(const std::string& path, const char* contents) {
 void test_matrix_file_round_trip() {
     const TestFile input("input");
     const TestFile output("output");
-    write_fixture(input.path, "2 3\n0.125 -2.75 0\n10.5 4.25 -0.5\n");
-    const DenseMatrix expected(2, 3, {0.125, -2.75, 0.0, 10.5, 4.25, -0.5});
+    // Windows line endings, mixed whitespace and no newline after the last row.
+    write_fixture(input.path, "  0.125\t-2.75 0\r\n1.2345678901234567 4.25 -0.5");
+    const DenseMatrix expected(2, 3, {0.125, -2.75, 0.0, 1.2345678901234567, 4.25, -0.5});
 
     const DenseMatrix loaded = load_matrix(input.path);
-    check_matrix(loaded, expected);
+    check_matrix(loaded, expected, 0.0);
     save_matrix(loaded, output.path);
-    check_matrix(load_matrix(output.path), expected);
+    check_matrix(load_matrix(output.path), expected, 0.0);
+
+    std::ifstream saved(output.path);
+    std::string line;
+    for (int row = 0; row < expected.get_rows(); ++row) {
+        require(static_cast<bool>(std::getline(saved, line)), "Missing row in saved file");
+        std::istringstream values(line);
+        for (int col = 0; col < expected.get_cols(); ++col) {
+            double value = 0.0;
+            require((values >> value) && value == expected.get_element(row, col),
+                    "Saved file must contain only matrix entries, row by row");
+        }
+        std::string extra;
+        require(!(values >> extra), "Extra entry in saved file");
+    }
+    require(!std::getline(saved, line) && saved.eof() && !saved.bad(),
+            "Extra row or read error in saved file");
 }
 
 void test_bad_matrix_files() {
     const TestFile file("invalid");
-    for (const char* contents : {"2 x\n", "-1 3\n", "2 2\n1 2 3\n", "1 2\n1 abc\n"}) {
+    const char* invalid_files[] = {
+        "",
+        "1 2\n\n3 4\n",
+        "1 2\n \t\n3 4\n",
+        "1 2\n3\n",
+        "1 2\n3 4 5\n",
+        "1 2\n3 abc\n",
+        "1 2\n3 12abc\n",
+    };
+    for (const char* contents : invalid_files) {
         write_fixture(file.path, contents);
         expect_exception<std::runtime_error>([&] { load_matrix(file.path); },
                                              "Accepted invalid matrix file");
@@ -154,8 +182,8 @@ int main() {
         {"Uneven split, 7 rows on 4 threads", test_uneven_rows},
         {"Zero dimensions", test_zero_dimensions},
         {"Invalid matrix dimensions and thread counts", test_bad_arguments},
-        {"Matrix file load, save and reload", test_matrix_file_round_trip},
-        {"Invalid and truncated matrix files", test_bad_matrix_files},
+        {"Headerless matrix load, save and reload", test_matrix_file_round_trip},
+        {"Empty files, invalid row lengths and invalid numbers", test_bad_matrix_files},
     };
 
     int failures = 0;

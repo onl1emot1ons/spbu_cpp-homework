@@ -6,6 +6,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <sstream>
+#include <limits>
+#include <iomanip>
+#include <vector>
 #include <fstream>
 
 DenseMatrix load_matrix(const std::string& path) {
@@ -14,28 +18,53 @@ DenseMatrix load_matrix(const std::string& path) {
         throw std::runtime_error("Cannot open file: " + path);
     }
 
-    int rows = 0;
-    int cols = 0;
-    if (!(input >> rows >> cols)) {
-        throw std::runtime_error("Cannot read matrix dimensions");
-    }
+    std::vector<double> data;
+    std::size_t rows = 0;
+    std::size_t cols = 0;
+    std::string line;
 
-    if (rows < 0 || cols < 0) {
-        throw std::runtime_error("Matrix dimensions must be non-negative");
-    }
+    while (std::getline(input, line)) {
+        std::istringstream ss(line);
+        std::size_t cnt_cols = 0;
+        std::string token;
 
-    DenseMatrix matrix(rows, cols);
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-            double value = 0;
-            if (!(input >> value)) {
-                throw std::runtime_error("Cannot read matrix value");
+        while (ss >> token) {
+            std::istringstream number(token);
+            double value;
+            if (!(number >> value) || !number.eof()) {
+                throw std::runtime_error("Invalid number: " + token);
             }
-            matrix.set_element(r, c, value);
+
+            data.push_back(value);
+            ++cnt_cols;
         }
+
+        if (cnt_cols == 0) {
+            throw std::runtime_error("Matrix contains an empty row");
+        }
+
+        if (rows == 0) {
+            cols = cnt_cols;
+        }
+        else if (cnt_cols != cols) {
+            throw std::runtime_error("Matrix rows have different lengths");
+        }
+
+        ++rows;
     }
 
-    return matrix;
+    if (input.bad() || !input.eof()) {
+        throw std::runtime_error("Cannot read file: " + path);
+    }
+    if (rows == 0) {
+        throw std::runtime_error("Matrix file has no numbers");
+    }
+    if (rows > std::numeric_limits<int>::max() || cols > std::numeric_limits<int>::max()) {
+        throw std::runtime_error("Matrix dimensions are too large");
+    }
+
+    return DenseMatrix(static_cast<int>(rows), static_cast<int>(cols), data);
+
 }
 
 void save_matrix(const DenseMatrix& matrix, const std::string& path) {
@@ -44,10 +73,14 @@ void save_matrix(const DenseMatrix& matrix, const std::string& path) {
         throw std::runtime_error("Cannot open file: " + path);
     }
 
+    output << std::setprecision(std::numeric_limits<double>::max_digits10);
+
     int r = matrix.get_rows();
     int c = matrix.get_cols();
 
-    output << r << ' ' << c << '\n';
+    if (r == 0 || c == 0) {
+        throw std::runtime_error("Cannot save a matrix with a zero dimension");
+    }
 
     for (int i = 0; i < r; ++i) {
         for (int j = 0; j < c; ++j) {
@@ -57,5 +90,10 @@ void save_matrix(const DenseMatrix& matrix, const std::string& path) {
             output << matrix.get_element(i, j);
         }
         output << '\n';
+    }
+
+    output.close();
+    if (!output) {
+        throw std::runtime_error("Cannot write file: " + path);
     }
 }
