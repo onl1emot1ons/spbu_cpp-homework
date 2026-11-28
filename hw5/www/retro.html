@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Сетевой уголок</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: #1c2850;
+            background-color: #102456;
+            background-image:
+                linear-gradient(#294276 1px, transparent 1px),
+                linear-gradient(90deg, #294276 1px, transparent 1px);
+            background-size: 24px 24px;
+            font: 1rem/1.65 Verdana, Arial, sans-serif;
+        }
+
+        .page {
+            width: min(48rem, calc(100% - 2rem));
+            margin: clamp(1rem, 7vw, 4rem) auto;
+            border: 3px solid #ffe778;
+            background: #fff8dc;
+            box-shadow: 8px 8px 0 #080f29;
+        }
+
+        header {
+            padding: clamp(1.25rem, 5vw, 2.75rem);
+            color: #fff8dc;
+            background: #172e71;
+            border-bottom: 3px solid #ffe778;
+        }
+
+        h1, h2, code, .subtitle { font-family: "Courier New", monospace; }
+
+        h1 {
+            margin: 0;
+            color: #ffe778;
+            font-size: clamp(2rem, 8vw, 3.75rem);
+            line-height: 1.04;
+        }
+
+        .subtitle { margin: 0.85rem 0 0; }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem 1.5rem;
+            padding: 0.8rem clamp(1.25rem, 5vw, 2.75rem);
+            border-bottom: 2px solid #243b78;
+            background: #d4f0e9;
+        }
+
+        a { color: #112878; text-underline-offset: 0.2em; }
+        a:visited { color: #572977; }
+        a:focus-visible { outline: 3px solid #a62b56; outline-offset: 3px; }
+
+        main { padding: clamp(1.25rem, 5vw, 2.75rem); }
+        section + section { margin-top: 1.75rem; }
+        h2 { margin: 0 0 0.6rem; font-size: 1.5rem; line-height: 1.2; }
+        p { margin: 0; }
+
+        pre {
+            margin: 0.9rem 0;
+            padding: 0.8rem 1rem;
+            border-left: 4px solid #008472;
+            background: #e0f4ee;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        footer {
+            padding: 0.8rem clamp(1.25rem, 5vw, 2.75rem);
+            border-top: 2px solid #243b78;
+            color: #fff8dc;
+            background: #172e71;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>
+            <h1>Сетевой уголок</h1>
+            <p class="subtitle">Домашняя страница в стиле веба 90-х</p>
+        </header>
+        <nav aria-label="Разделы страницы">
+            <a href="#welcome">О странице</a>
+            <a href="#exchange">Как она загрузилась</a>
+        </nav>
+        <main>
+            <section id="welcome">
+                <h2>Привет!</h2>
+                <p>Это моя домашняя страница. Её отдаёт учебный HTTP-сервер на C++ и WinSock2.</p>
+            </section>
+            <section id="exchange">
+                <h2>От запроса до страницы</h2>
+                <p>Браузер просит файл, а сервер читает его с диска и отправляет вместе с HTTP-заголовками.</p>
+                <pre><code>GET /index.html HTTP/1.1
+HTTP/1.1 200 OK</code></pre>
+                <p>Во вкладке Network можно увидеть статус запроса и содержимое ответа.</p>
+            </section>
+        </main>
+        <footer>Учебный проект по C++</footer>
+    </div>
+</body>
+</html>
